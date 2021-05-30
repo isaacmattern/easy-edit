@@ -533,18 +533,38 @@ void editorInsertChar(int c) {
 }
 
 void editorInsertNewline() {
+    int prev_num_spaces = 0;
     if(E.cx == 0) {
 	editorInsertRow(E.cy, "", 0);
     } else {
 	erow *row = &E.row[E.cy];
-	editorInsertRow(E.cy + 1, &row->chars[E.cx], row->size - E.cx);
+
+	for(int i = 0; i < row->size; i++) {
+	    if(row->chars[i] == ' ') {
+		prev_num_spaces++;
+	    } else if (row->chars[i] == '\t') {
+		prev_num_spaces += 8;
+	    } else {
+		break;
+	    }
+	}
+
+	int newLineSize = row->size - E.cx + prev_num_spaces;
+        char newLine[newLineSize];
+
+	for(int i = 0; i < prev_num_spaces; i++) {
+	    newLine[i] = ' ';
+	}
+	memcpy(newLine + sizeof(char) * prev_num_spaces, &row->chars[E.cx], row->size - E.cx);
+	editorInsertRow(E.cy + 1, newLine, newLineSize);
+
 	row = &E.row[E.cy];
 	row->size = E.cx;
 	row->chars[row->size] = '\0';
 	editorUpdateRow(row);
     }
     E.cy++;
-    E.cx = 0;
+    E.cx = prev_num_spaces;
 }
 
 void editorDelChar() {
